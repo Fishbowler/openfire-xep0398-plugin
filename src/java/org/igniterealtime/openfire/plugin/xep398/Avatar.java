@@ -70,7 +70,7 @@ public class Avatar {
         return test.equalsIgnoreCase(rawHash);
     }
 
-    private boolean calHashes() {
+    private boolean calculateHashes() {
         byte[] raw = getImageBytes();
         byte[] shrinked = getShrinkedImage(raw);
 
@@ -101,7 +101,7 @@ public class Avatar {
     {
         this.avatar_base64 = Base64.encodeBytes(Base64.decode(binval.trim(), Base64.DONT_BREAK_LINES),Base64.DONT_BREAK_LINES);
 
-        if (calHashes())
+        if (calculateHashes())
         {
             byte[] image = getImageBytes();
 
@@ -116,7 +116,7 @@ public class Avatar {
                 Log.error("Could not set height/width of image");
             }
             
-            String tmp = calcShrinkedImage();
+            String tmp = calculateShrinkedImage();
             if (tmp!=null)
             {
                 this.avatar_base64shrinked=tmp;
@@ -128,7 +128,7 @@ public class Avatar {
         return avatar_base64shrinked;
     }
 
-    private String calcShrinkedImage() {
+    private String calculateShrinkedImage() {
         try {
             byte[] imgdata = getImageBytes();
             if (imgdata!=null)
@@ -242,7 +242,11 @@ public class Avatar {
             Avatar result = new Avatar();
             AvatarMetadata meta = new AvatarMetadata();
 
-            result.avatar_base64 = json.has("base64")&&json.getString("base64")!=null&&!json.getString("base64").isEmpty()?json.getString("base64"):null;
+            result.avatar_base64 = json.has("base64")
+                && json.getString("base64") != null
+                && !json.getString("base64").isEmpty()
+                ? json.getString("base64") : null;
+
             if (result.avatar_base64==null)
             {
                 return null;

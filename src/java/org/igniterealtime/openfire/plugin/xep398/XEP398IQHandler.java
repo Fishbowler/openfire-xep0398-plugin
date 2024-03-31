@@ -87,25 +87,35 @@ public class XEP398IQHandler implements PacketInterceptor
             PEPService pep = pepmgr.getPEPService(userjid);
             if (pep!=null)
             {
-                Log.debug("PEPService from "+userjid.toBareJID()+" loaded successfully");
+                Log.debug("PEPService from {} loaded successfully", userjid.toBareJID());
                 return pep;
             }
             else
             {
-                Log.error("getPEPFromUser: PEPService from user \""+userjid.toBareJID()+"\" could not be loaded");
+                Log.error("getPEPFromUser: PEPService from user '{}' could not be loaded", userjid.toBareJID());
                 return null;
             }
         }
         catch (Exception e1)
         {
-            Log.error("getPEPFromUser: "+e1.getMessage());
+            Log.error("getPEPFromUser", e1);
             return null;
         }
     }
 
+    private Avatar getAvatarFromElementData(Element data)
+    {
+        Avatar result = new Avatar();
+        result.getMetadata().setHeight(Integer.parseInt(data.attributeValue("height")));
+        result.getMetadata().setWidth(Integer.parseInt(data.attributeValue("width")));
+        result.getMetadata().setType(data.attributeValue("type"));
+        result.getMetadata().setId(data.attributeValue("id"));
+        return result;
+    }
+
     public Avatar getAvatarWithInfotag(JID user,Element info)
     {
-        Log.debug("Read Avatar from PEPService ("+user.toBareJID()+")");
+        Log.debug("Read Avatar from PEPService ('{}')", user.toBareJID());
         Avatar result;
 
         PEPService pep = getPEPFromUser(user);
@@ -122,12 +132,8 @@ public class XEP398IQHandler implements PacketInterceptor
                 {
                     return getAvatar(user);
                 }
-                result = new Avatar();
-                result.getMetadata().setHeight(Integer.parseInt(info.attributeValue("height")));
-                result.getMetadata().setWidth(Integer.parseInt(info.attributeValue("width")));
-                result.getMetadata().setType(info.attributeValue("type"));
-                result.getMetadata().setId(info.attributeValue("id"));
-                Log.debug("Metadata loaded ("+user.toBareJID()+")",result.getMetadata().toString());
+                result = getAvatarFromElementData(info);
+                Log.debug("Metadata loaded ('{}'): {}",user.toBareJID(),result.getMetadata().toString());
 
                 List<PublishedItem> items = avatarNode.getPublishedItems();
                 if (items!=null)
@@ -144,7 +150,7 @@ public class XEP398IQHandler implements PacketInterceptor
                                 if (img!=null)
                                 {
                                     result.setImage(img);
-                                    Log.debug("Avatarimage loaded ("+user.toBareJID()+")",result.getMetadata().toString());
+                                    Log.debug("Avatarimage loaded ('{}'): {}",user.toBareJID(),result.getMetadata().toString());
                                     founddata=true;
                                     break;
                                 }
@@ -154,19 +160,19 @@ public class XEP398IQHandler implements PacketInterceptor
 
                     if (!founddata)
                     {
-                        Log.debug("Node ("+NAMESPACE_DATA+") does not have a data tag ("+user.toBareJID()+")");
+                        Log.debug("Node '{}' does not have a data tag ('{}')",NAMESPACE_DATA,user.toBareJID());
                         return null;
                     }
                 }
                 else {
-                    Log.debug("Node ("+NAMESPACE_DATA+") does not have any children ("+user.toBareJID()+")");
+                    Log.debug("Node '{}' does not have any children ('{}')",NAMESPACE_DATA,user.toBareJID());
                     return null;
                 }
 
                 return result;
             }
             else {
-                Log.debug("One of the following nodes were not found in PEP: "+NAMESPACE_DATA+" or "+NAMESPACE_METADATA+" ("+user.toBareJID()+")");
+                Log.debug("One of the following nodes were not found in PEP: '{}' or '{}' ({})", NAMESPACE_DATA, NAMESPACE_METADATA, user.toBareJID());
                 return null;
             }
         }
@@ -189,7 +195,7 @@ public class XEP398IQHandler implements PacketInterceptor
             }
         }
 
-        Log.debug("Read Avatar from PEPService ("+user.toBareJID()+")");
+        Log.debug("Read Avatar from PEPService ({})", user.toBareJID());
 
         PEPService pep = getPEPFromUser(user);
         if (pep!=null)
@@ -199,7 +205,7 @@ public class XEP398IQHandler implements PacketInterceptor
             Node avatarNode = pep.getNode(NAMESPACE_DATA);
 
             //Check for pep nodes
-            if (metaNode!=null&&avatarNode!=null)
+            if (metaNode!=null && avatarNode!=null)
             {
                 //META
                 result = new Avatar();
@@ -222,11 +228,8 @@ public class XEP398IQHandler implements PacketInterceptor
                                 {
                                     continue;
                                 }
-                                result.getMetadata().setHeight(Integer.parseInt(info.attributeValue("height")));
-                                result.getMetadata().setWidth(Integer.parseInt(info.attributeValue("width")));
-                                result.getMetadata().setType(info.attributeValue("type"));
-                                result.getMetadata().setId(info.attributeValue("id"));
-                                Log.debug("Metadata loaded ("+user.toBareJID()+")",result.getMetadata().toString());
+                                result = getAvatarFromElementData(info);
+                                Log.debug("Metadata loaded ({}): {}",user.toBareJID(), result.getMetadata().toString());
                                 founddata=true;
                                 break;
                             }
@@ -235,12 +238,12 @@ public class XEP398IQHandler implements PacketInterceptor
                         
                     if (!founddata)
                     {
-                        Log.debug("Node ("+NAMESPACE_METADATA+") does not have a metadata tag ("+user.toBareJID()+")");
+                        Log.debug("Node '{}' does not have a metadata tag ({})", NAMESPACE_METADATA, user.toBareJID());
                         return null;
                     }
                 }
                 else {
-                    Log.debug("Node ("+NAMESPACE_METADATA+") does not have any children ("+user.toBareJID()+")");
+                    Log.debug("Node '{}' does not have any children ({})", NAMESPACE_METADATA, user.toBareJID());
                     return null;
                 }
 
@@ -259,7 +262,7 @@ public class XEP398IQHandler implements PacketInterceptor
                                 if (img!=null)
                                 {
                                     result.setImage(img);
-                                    Log.debug("Avatarimage loaded ("+user.toBareJID()+")",result.getMetadata().toString());
+                                    Log.debug("Avatarimage loaded ({}): {}", user.toBareJID(), result.getMetadata().toString());
                                     founddata=true;
                                     break;
                                 }
@@ -269,12 +272,12 @@ public class XEP398IQHandler implements PacketInterceptor
 
                     if (!founddata)
                     {
-                        Log.debug("Node ("+NAMESPACE_DATA+") does not have a data tag ("+user.toBareJID()+")");
+                        Log.debug("Node '{}' does not have a data tag ({})", NAMESPACE_DATA, user.toBareJID());
                         return null;
                     }
                 }
                 else {
-                    Log.debug("Node ("+NAMESPACE_DATA+") does not have any children ("+user.toBareJID()+")");
+                    Log.debug("Node '{}' does not have any children ({})", NAMESPACE_DATA, user.toBareJID());
                     return null;
                 }
 
@@ -282,7 +285,7 @@ public class XEP398IQHandler implements PacketInterceptor
                 return result;
             }
             else {
-                Log.debug("One of the following nodes were not found in PEP: "+NAMESPACE_DATA+" or "+NAMESPACE_METADATA+" ("+user.toBareJID()+")");
+                Log.debug("One of the following nodes were not found in PEP: '{}' or '{}' ({})", NAMESPACE_DATA, NAMESPACE_METADATA, user.toBareJID());
                 return null;
             }
         }
@@ -350,7 +353,7 @@ public class XEP398IQHandler implements PacketInterceptor
             avatar.getMetadata().setId(hash);
         }
         else {
-            Log.error("buildAvatar: Could not calc. image hash!");
+            Log.error("buildAvatar: Could not calculate image hash!");
             avatar.getMetadata().setId(null);
         }
 
@@ -411,16 +414,21 @@ public class XEP398IQHandler implements PacketInterceptor
      * */
     private void deleteOldMetadataNode(JID jid)
     {
+        deleteOldDataForUserFromNode(jid,NAMESPACE_METADATA);
+    }
+
+    private void deleteOldDataForUserFromNode(JID jid, String node)
+    {
         PEPService pep = getPEPFromUser(jid);
         if (pep!=null)
         {
-            Node nmeta = pep.getNode(NAMESPACE_METADATA);
+            Node pepnode = pep.getNode(node);
 
-            if (nmeta!=null && !nmeta.getPublishedItems().isEmpty())
+            if (pepnode!=null && !pepnode.getPublishedItems().isEmpty())
             {
-                nmeta.getPublishedItems().get(0).getNode().deleteItems(nmeta.getPublishedItems());
-                pep.removeNode(nmeta.getUniqueIdentifier());
-                nmeta.delete();
+                pepnode.getPublishedItems().get(0).getNode().deleteItems(pepnode.getPublishedItems());
+                pep.removeNode(pepnode.getUniqueIdentifier());
+                pepnode.delete();
             }
         }
     }
@@ -491,18 +499,7 @@ public class XEP398IQHandler implements PacketInterceptor
      * */
     private void deleteOldDataNode(JID jid)
     {
-        PEPService pep = getPEPFromUser(jid);
-        if (pep!=null)
-        {
-            Node ndata = pep.getNode(NAMESPACE_DATA);
-
-            if (ndata!=null&& !ndata.getPublishedItems().isEmpty())
-            {
-                ndata.getPublishedItems().get(0).getNode().deleteItems(ndata.getPublishedItems());
-                pep.removeNode(ndata.getUniqueIdentifier());
-                ndata.delete();
-            }
-        }
+        deleteOldDataForUserFromNode(jid,NAMESPACE_DATA);
     }
 
     /**
@@ -653,16 +650,9 @@ public class XEP398IQHandler implements PacketInterceptor
      * */
     private void broadcastPresenceUpdate(JID jid, Avatar avatar, boolean shrinked)
     {
-        User usr;
         try
         {
-            usr = XMPPServer.getInstance().getUserManager().getUser(jid.getNode());
-            Presence presenceStanza = XMPPServer.getInstance().getPresenceManager().getPresence(usr);
-            presenceStanza.setID(UUID.randomUUID().toString());
-            if (presenceStanza.getFrom()==null)
-            {
-                presenceStanza.setFrom(jid);
-            }
+            Presence presenceStanza = getPresenceStanzaForBroadcast(jid);
 
             Element x = presenceStanza.getChildElement("x", NAMESPACE_VCARD_TEMP_X_UPDATE);
             if (x==null)
@@ -716,16 +706,9 @@ public class XEP398IQHandler implements PacketInterceptor
       * */
     private void broadcastPresenceUpdateJabberXAvatar(JID jid, Avatar avatar,boolean shrinked)
     {
-         User usr;
          try
          {
-             usr = XMPPServer.getInstance().getUserManager().getUser(jid.getNode());
-             Presence presenceStanza = XMPPServer.getInstance().getPresenceManager().getPresence(usr);
-             presenceStanza.setID(UUID.randomUUID().toString());
-             if (presenceStanza.getFrom()==null)
-             {
-                 presenceStanza.setFrom(jid);
-             }
+             Presence presenceStanza = getPresenceStanzaForBroadcast(jid);
 
              Element x = presenceStanza.getChildElement("x", NAMESPACE_JABBER_X_AVATAR);
              if (x==null)
@@ -767,6 +750,18 @@ public class XEP398IQHandler implements PacketInterceptor
              Log.error("Could not send presence: "+e.getMessage());
          }
      }
+
+    private static Presence getPresenceStanzaForBroadcast(JID jid) throws UserNotFoundException {
+        User usr;
+        usr = XMPPServer.getInstance().getUserManager().getUser(jid.getNode());
+        Presence presenceStanza = XMPPServer.getInstance().getPresenceManager().getPresence(usr);
+        presenceStanza.setID(UUID.randomUUID().toString());
+        if (presenceStanza.getFrom()==null)
+        {
+            presenceStanza.setFrom(jid);
+        }
+        return presenceStanza;
+    }
 
     private void handleIQ(IQ iq, boolean incoming, boolean processed) {
         
