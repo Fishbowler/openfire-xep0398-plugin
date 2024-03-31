@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 /**
  * An Openfire plugin that integrates XEP-0398.
  *
- * @author 
+ * @author mightymop
  */
 public class XEP398Plugin implements Plugin
 {

@@ -4,7 +4,6 @@ import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.Serializable;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Formatter;
@@ -30,7 +29,7 @@ public class Avatar {
     private String rawHash = null;
     private String shrinkedHash = null;
 
-    private AvatarMetadata metadata = null;
+    private AvatarMetadata metadata;
 
     public Avatar() {
         this.metadata = new AvatarMetadata();
@@ -46,7 +45,7 @@ public class Avatar {
     }
 
     public byte[] getImageBytes() {
-        byte[] result = null;
+        byte[] result;
         try {
             result = Base64.decode(this.avatar_base64,Base64.DONT_BREAK_LINES);
         }
@@ -166,13 +165,13 @@ public class Avatar {
         if (image==null||mimetype==null)
             return null;
         
-        final Iterator it = ImageIO.getImageWritersByMIMEType( mimetype );
+        final Iterator<ImageWriter> it = ImageIO.getImageWritersByMIMEType( mimetype );
         if ( !it.hasNext() )
         {
             Log.debug("getShrinkedImage: Cannot resize avatar. No writers available for MIME type {}.", mimetype );
             return null;
         }
-        final ImageWriter iw = (ImageWriter) it.next();
+        final ImageWriter iw = it.next();
 
         final int targetDimension = JiveGlobals.getIntProperty( PhotoResizer.PROPERTY_TARGETDIMENSION, PhotoResizer.PROPERTY_TARGETDIMENSION_DEFAULT );
         final byte[] resized = PhotoResizer.cropAndShrink( image, targetDimension, iw );
@@ -226,18 +225,11 @@ public class Avatar {
 
     public static String byteArray2Hex(final byte[] hash)
     {
-        Formatter formatter = new Formatter();
-        try
-        {
-            for (byte b : hash)
-            {
+        try (Formatter formatter = new Formatter()) {
+            for (byte b : hash) {
                 formatter.format("%02x", b);
             }
             return formatter.toString();
-        }
-        finally
-        {
-            formatter.close();
         }
     }
     

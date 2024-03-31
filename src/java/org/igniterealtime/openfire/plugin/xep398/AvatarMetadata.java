@@ -50,8 +50,8 @@ public class AvatarMetadata {
     public String toString() {
         return    "{\n"+
                   "\"id\":\""+id+"\",\n"
-                + "\"height\":\""+String.valueOf(height)+"\",\n"
-                + "\"width\":\""+String.valueOf(width)+"\",\n"
+                + "\"height\":\""+ height +"\",\n"
+                + "\"width\":\""+ width +"\",\n"
                 + "\"type\":\""+type+"\"\n"
                 + "}";
     }

@@ -51,14 +51,14 @@ public class XEP398IQHandler implements PacketInterceptor
 
     public static String NAMESPACE_STORAGE_CLIENT_AVATAR = "storage:client:avatar";
 
-    private PEPServiceManager pepmgr;
+    private final PEPServiceManager pepmgr;
 
-    private XEP398Plugin plugin;
+    private final XEP398Plugin plugin;
 
-    private StorageClientAvatarHandler storageHandler;
-    private JabberIQAvatarHandler jabberAvatarHandler;
+    private final StorageClientAvatarHandler storageHandler;
+    private final JabberIQAvatarHandler jabberAvatarHandler;
 
-    private IQRouter iqRouter;
+    private final IQRouter iqRouter;
     //Constructors
     public XEP398IQHandler(XEP398Plugin reference)
     {
@@ -108,7 +108,7 @@ public class XEP398IQHandler implements PacketInterceptor
     public Avatar getAvatarWithInfotag(JID user,Element info)
     {
         Log.debug("Read Avatar from PEPService ("+user.toBareJID()+")");
-        Avatar result = null;
+        Avatar result;
 
         PEPService pep = getPEPFromUser(user);
         if (pep!=null)
@@ -180,7 +180,7 @@ public class XEP398IQHandler implements PacketInterceptor
 
     public Avatar getAvatar(JID user)
     {
-        Avatar result = null;
+        Avatar result;
         if (this.plugin.getCache().containsKey(user.toBareJID()))
         {
             String cachedAvatar = this.plugin.getCache().get(user.toBareJID());
@@ -296,7 +296,7 @@ public class XEP398IQHandler implements PacketInterceptor
 
     private Avatar getAvatarFromVcard(JID from)
     {
-        Avatar result = null;
+        Avatar result;
         if (this.plugin.getCache().containsKey(from.toBareJID()))
         {
             String cachedAvatar = this.plugin.getCache().get(from.toBareJID());
@@ -321,7 +321,10 @@ public class XEP398IQHandler implements PacketInterceptor
 
             Element binval = vcardphoto.element("BINVAL");
             Element type = vcardphoto.element("TYPE");
-            if (binval!=null&&type!=null&&binval.getTextTrim().length()>0&&type.getTextTrim().length()>0)
+            if (binval != null
+                && type != null
+                && !binval.getTextTrim().isEmpty()
+                && !type.getTextTrim().isEmpty())
             {
                 result = buildAvatar(binval.getTextTrim(),type.getTextTrim());
                 this.plugin.getCache().put(from.toBareJID(), result.toString());
@@ -415,7 +418,7 @@ public class XEP398IQHandler implements PacketInterceptor
         {
             Node nmeta = pep.getNode(NAMESPACE_METADATA);
 
-            if (nmeta!=null&&nmeta.getPublishedItems().size()>0)
+            if (nmeta!=null && !nmeta.getPublishedItems().isEmpty())
             {
                 nmeta.getPublishedItems().get(0).getNode().deleteItems(nmeta.getPublishedItems());
                 pep.removeNode(nmeta.getUniqueIdentifier());
@@ -435,7 +438,7 @@ public class XEP398IQHandler implements PacketInterceptor
         if (pep!=null)
         {
             Node ndata = pep.getNode(NAMESPACE_METADATA);
-            LeafNode newNode = null;
+            LeafNode newNode;
             if (ndata == null) {
                 // Create the node
                 final JID creator = jid.asBareJID();
@@ -467,7 +470,7 @@ public class XEP398IQHandler implements PacketInterceptor
             metainfo.addAttribute("type",avatar.getMetadata().getType());
             metainfo.addAttribute("width",String.valueOf(avatar.getMetadata().getWidth()));
 
-            ArrayList<Element> lItems = new ArrayList<Element>();
+            ArrayList<Element> lItems = new ArrayList<>();
             lItems.add(metaitem);
             try
             {
@@ -495,7 +498,7 @@ public class XEP398IQHandler implements PacketInterceptor
         {
             Node ndata = pep.getNode(NAMESPACE_DATA);
 
-            if (ndata!=null&&ndata.getPublishedItems().size()>0)
+            if (ndata!=null&& !ndata.getPublishedItems().isEmpty())
             {
                 ndata.getPublishedItems().get(0).getNode().deleteItems(ndata.getPublishedItems());
                 pep.removeNode(ndata.getUniqueIdentifier());
@@ -531,7 +534,7 @@ public class XEP398IQHandler implements PacketInterceptor
         if (pep!=null)
         {
             Node ndata = pep.getNode(NAMESPACE_DATA);
-            LeafNode newNode = null;
+            LeafNode newNode;
             if (ndata == null) {
                 // Create the node
                 final JID creator = jid.asBareJID();
@@ -558,7 +561,7 @@ public class XEP398IQHandler implements PacketInterceptor
             Element data = item.addElement("data", NAMESPACE_DATA);
             data.setText(avatar.getImageString());
 
-            ArrayList<Element> lItems = new ArrayList<Element>();
+            ArrayList<Element> lItems = new ArrayList<>();
             lItems.add(item);
             try
             {
@@ -593,7 +596,7 @@ public class XEP398IQHandler implements PacketInterceptor
             Element binval = photo.addElement("BINVAL");
             type.setText(avatar.getMetadata().getType());
 
-            String imgdata = null;
+            String imgdata;
             if (XEP398Plugin.XMPP_SHRINKVCARDIMG_ENABLED.getValue())
             {
                 imgdata = avatar.getShrinkedImage();
@@ -645,9 +648,12 @@ public class XEP398IQHandler implements PacketInterceptor
     * send a Presence to the server, which routes it to subscribers
      * @param jid
      *            is the senders jid
-     * @param publish whether a photo is published or not
+     * @param avatar
+     *          the new avatar to publish
+     * @param shrinked
+     *          whether the avatar image has been compressed
      * */
-    private void broadcastPresenceUpdate(JID jid, Avatar avatar,boolean shrinked)
+    private void broadcastPresenceUpdate(JID jid, Avatar avatar, boolean shrinked)
     {
         User usr;
         try
@@ -703,9 +709,12 @@ public class XEP398IQHandler implements PacketInterceptor
     
     /**
      * send a Presence to the server, which routes it to subscribers
-      * @param jid
-      *            is the senders jid
-      * @param publish whether a photo is published or not
+     * @param jid
+     *            is the senders jid
+     * @param avatar
+     *          the new avatar to publish
+     * @param shrinked
+     *          whether the avatar image has been compressed
       * */
     private void broadcastPresenceUpdateJabberXAvatar(JID jid, Avatar avatar,boolean shrinked)
     {
@@ -761,7 +770,7 @@ public class XEP398IQHandler implements PacketInterceptor
          }
      }
 
-    private void handleIQ(IQ iq, Session session, boolean incoming, boolean processed) throws PacketRejectedException {
+    private void handleIQ(IQ iq, Session session, boolean incoming, boolean processed) {
         
         if (iq.getType()!=Type.set&&iq.getType()!=Type.result)
         {
@@ -778,7 +787,7 @@ public class XEP398IQHandler implements PacketInterceptor
                 if (incoming&&processed&&childns.equalsIgnoreCase(NAMESPACE_PUBSUB)&&iq.getType()==Type.set) // PUBUB Packet, check for XEP-0084
                 {
 
-                    Element publish = null;
+                    Element publish;
 
                     if ((publish=childElement.element("publish"))!=null)
                     {
@@ -841,21 +850,21 @@ public class XEP398IQHandler implements PacketInterceptor
                 else
                 if (incoming&&processed&&childns.equalsIgnoreCase(NAMESPACE_VCARD_TEMP)&&iq.getType()==Type.set)
                 {
-                    Element vcard = null;
+                    Element vcard;
                     if ((vcard=iq.getElement().element("vCard"))!=null)
                     {
                         //We got a vcard, check if it is empty or not
                         if (vcard.hasContent())
                         {
                             Log.debug("Processing incoming vcard, we have content and checking for an avatar now...(XEP-0153)");
-                            Element photo = null;
+                            Element photo;
                             if ((photo=vcard.element("PHOTO"))!=null) {
-                                Element binval = null;
+                                Element binval;
                                 if ((binval=photo.element("BINVAL"))!=null) {
                                     if (binval.hasContent()) {
                                         Log.debug("We have a filled BINVAL Element, we will save the avatar to PEP storage too");
-                                        Element type = null;
-                                        if ((type=photo.element("TYPE"))!=null) {
+                                        Element type = photo.element("TYPE");
+                                        if (type != null) {
                                             Log.debug("The avatar is of type "+type.getText());
                                         }
 
@@ -900,24 +909,24 @@ public class XEP398IQHandler implements PacketInterceptor
                 else
                 if(!incoming&&!processed&&childns.equalsIgnoreCase(NAMESPACE_VCARD_TEMP)&&iq.getType()==Type.result)
                 {
-                    Element vcard = null;
+                    Element vcard;
                     if ((vcard=iq.getElement().element("vCard"))!=null)
                     {
                         Avatar avatar = getAvatar(iq.getFrom());
                         if (avatar!=null)
                         {
-                            Element photo = null;
+                            Element photo;
                             if ((photo=vcard.element("PHOTO"))==null)
                             {
                                 photo = vcard.addElement("PHOTO");
                             }
 
-                            Element binval = null;
+                            Element binval;
                             if ((binval=photo.element("BINVAL"))==null) {
                                 binval = photo.addElement("BINVAL");
                             }
 
-                            Element type = null;
+                            Element type;
                             if ((type=photo.element("TYPE"))==null) {
                                 type = photo.addElement("TYPE");
                             }
@@ -953,7 +962,7 @@ public class XEP398IQHandler implements PacketInterceptor
             }
             else
             {
-                Log.warn("We received a packet without namespace attribute",iq.toXML());
+                Log.warn("We received a packet without namespace attribute: {}",iq.toXML());
             }
         }
     }
@@ -1020,8 +1029,7 @@ public class XEP398IQHandler implements PacketInterceptor
     }
 
     @Override
-    public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed)
-            throws PacketRejectedException {
+    public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed) {
 
         if (XEP398Plugin.XMPP_AVATARCONVERSION_ENABLED.getValue()&&packet!=null)
         {
@@ -1076,7 +1084,7 @@ public class XEP398IQHandler implements PacketInterceptor
 
     class JabberIQAvatarHandler extends IQHandler {
 
-        private IQHandlerInfo info;
+        private final IQHandlerInfo info;
 
         public JabberIQAvatarHandler() {
             super(NAMESPACE_JABBER_IQ_AVATAR);
@@ -1089,9 +1097,8 @@ public class XEP398IQHandler implements PacketInterceptor
         }
 
         @Override
-        public IQ handleIQ(IQ iq) throws UnauthorizedException 
-        {
-            IQ result=null;
+        public IQ handleIQ(IQ iq) {
+            IQ result;
             if (XEP398Plugin.XMPP_XEP0008_ENABLED.getValue())
             {
                if (iq.getChildElement().getName().equalsIgnoreCase("query")&&iq.getType()==Type.get&&iq.getChildElement()!=null&&iq.getChildElement().getNamespaceURI().equalsIgnoreCase(NAMESPACE_JABBER_IQ_AVATAR))
@@ -1111,8 +1118,8 @@ public class XEP398IQHandler implements PacketInterceptor
 
     class StorageClientAvatarHandler extends IQHandler {
 
-        private IQHandlerInfo info;
-        private XEP398Plugin plugin;
+        private final IQHandlerInfo info;
+        private final XEP398Plugin plugin;
         public StorageClientAvatarHandler(XEP398Plugin plugin) {
             super(NAMESPACE_STORAGE_CLIENT_AVATAR);
             this.info = new IQHandlerInfo("query", NAMESPACE_STORAGE_CLIENT_AVATAR);
@@ -1127,7 +1134,7 @@ public class XEP398IQHandler implements PacketInterceptor
         @Override
         public IQ handleIQ(IQ iq) throws UnauthorizedException 
         {
-            IQ result=null;
+            IQ result;
             if (XEP398Plugin.XMPP_XEP0008_ENABLED.getValue())
             {
                if (iq.getChildElement().getName().equalsIgnoreCase("query")&&iq.getType()==Type.get&&iq.getChildElement()!=null&&iq.getChildElement().getNamespaceURI().equalsIgnoreCase(NAMESPACE_STORAGE_CLIENT_AVATAR))
@@ -1137,14 +1144,14 @@ public class XEP398IQHandler implements PacketInterceptor
                else
                if (iq.getType()==Type.set&&iq.getChildElement()!=null&&iq.getChildElement().getNamespaceURI().equalsIgnoreCase(NAMESPACE_STORAGE_CLIENT_AVATAR))
                {
-                   Element query = null;
+                   Element query;
                    if ((query=iq.getElement().element("query"))!=null)
                    {
                        //We got a query, check if is empty or not
                        if (query .hasContent())
                        {
                            Log.debug("Processing incoming storage:client:avatar, we have content and checking for an avatar now...(XEP-0008)");
-                           Element data = null;
+                           Element data;
                            if ((data=query.element("data"))!=null&&data.hasContent()) {
 
                                 Avatar avatar = buildAvatar(data.getText(), data.attributeValue("mimetype"));
