@@ -11,10 +11,8 @@ import org.dom4j.Element;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.IQRouter;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.interceptor.PacketInterceptor;
-import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.pep.PEPService;
 import org.jivesoftware.openfire.pep.PEPServiceManager;
 import org.jivesoftware.openfire.pubsub.DefaultNodeConfiguration;
@@ -372,7 +370,7 @@ public class XEP398IQHandler implements PacketInterceptor
         return avatar;
     }
 
-    private IQ getResult(JID avatarjid, JID receiver,String namespace, String id)
+    private IQ getResult(JID receiver, String id)
     {
         IQ iq = new IQ(Type.result);
         iq.setFrom(new JID(XMPPServer.getInstance().getServerInfo().getXMPPDomain()));
@@ -403,7 +401,7 @@ public class XEP398IQHandler implements PacketInterceptor
         }
         else {
 
-            return getError(receiver, namespace, "cancel", "404", "item-not-found", "urn:ietf:params:xml:ns:xmpp-stanzas");
+            return getError(receiver, namespace, "cancel", "404", "item-not-found");
         }
 
     }
@@ -770,7 +768,7 @@ public class XEP398IQHandler implements PacketInterceptor
          }
      }
 
-    private void handleIQ(IQ iq, Session session, boolean incoming, boolean processed) {
+    private void handleIQ(IQ iq, boolean incoming, boolean processed) {
         
         if (iq.getType()!=Type.set&&iq.getType()!=Type.result)
         {
@@ -967,7 +965,7 @@ public class XEP398IQHandler implements PacketInterceptor
         }
     }
 
-    private void handleOutgoingPresence(Presence p, Session session)
+    private void handleOutgoingPresence(Presence p)
     {
         Element x = p.getChildElement("x", NAMESPACE_VCARD_TEMP_X_UPDATE);
         Avatar avatar = getAvatar(p.getFrom());
@@ -1037,7 +1035,7 @@ public class XEP398IQHandler implements PacketInterceptor
             {
                 if (packet.getFrom()!=null&&packet.getFrom().getDomain().equalsIgnoreCase(XMPPServer.getInstance().getServerInfo().getXMPPDomain()))
                 {
-                    handleIQ((IQ)packet,session,incoming,processed);
+                    handleIQ((IQ)packet, incoming,processed);
                 }
             }
             else 
@@ -1045,7 +1043,7 @@ public class XEP398IQHandler implements PacketInterceptor
             {
                 if (packet.getFrom()!=null&&packet.getFrom().getDomain().equalsIgnoreCase(XMPPServer.getInstance().getServerInfo().getXMPPDomain()))
                 {
-                    handleOutgoingPresence((Presence) packet,session);
+                    handleOutgoingPresence((Presence) packet);
                 }
             }
         }
@@ -1071,14 +1069,14 @@ public class XEP398IQHandler implements PacketInterceptor
         }
     } 
 
-    private static IQ getError(JID to, String namespace, String type, String code, String errorelement, String errornamespace) {
+    private static IQ getError(JID to, String namespace, String type, String code, String errorelement) {
         IQ result= new IQ(Type.error);
         result.setTo(to);
         result.setFrom(new JID(XMPPServer.getInstance().getServerInfo().getXMPPDomain()));
         Element error = result.setChildElement("error",namespace);
         error.addAttribute("type", type);
         error.addAttribute("code", code);
-        error.addElement(errorelement,errornamespace);
+        error.addElement(errorelement, "urn:ietf:params:xml:ns:xmpp-stanzas");
         return result;
     }
 
@@ -1106,11 +1104,11 @@ public class XEP398IQHandler implements PacketInterceptor
                    result = getXEP0008Avatar(iq.getTo(),iq.getFrom(),NAMESPACE_JABBER_IQ_AVATAR,iq.getID());
                }
                else {
-                   result = getError(iq.getFrom(),NAMESPACE_JABBER_IQ_AVATAR,"modify","400","bad-request","urn:ietf:params:xml:ns:xmpp-stanzas");
+                   result = getError(iq.getFrom(),NAMESPACE_JABBER_IQ_AVATAR,"modify","400","bad-request");
                }
             }
             else {
-               result = getError(iq.getFrom(),NAMESPACE_JABBER_IQ_AVATAR,"cancel","503","service-unavailable","urn:ietf:params:xml:ns:xmpp-stanzas");
+               result = getError(iq.getFrom(),NAMESPACE_JABBER_IQ_AVATAR,"cancel","503","service-unavailable");
             }
             return result;
         }
@@ -1132,8 +1130,7 @@ public class XEP398IQHandler implements PacketInterceptor
         }
 
         @Override
-        public IQ handleIQ(IQ iq) throws UnauthorizedException 
-        {
+        public IQ handleIQ(IQ iq) {
             IQ result;
             if (XEP398Plugin.XMPP_XEP0008_ENABLED.getValue())
             {
@@ -1159,32 +1156,32 @@ public class XEP398IQHandler implements PacketInterceptor
 
                                 routeDataToServer(iq.getFrom(), avatar);
                                 routeMetaDataToServer(iq.getFrom(), avatar);
-                                result=getResult(iq.getTo(),iq.getFrom(),NAMESPACE_JABBER_IQ_AVATAR,iq.getID());
+                                result=getResult(iq.getFrom(),iq.getID());
                            }
                            else {
                                this.plugin.getCache().remove(iq.getFrom().toBareJID());
                                deleteVCardAvatar(iq.getFrom());
                                deletePEPAvatar(iq.getFrom());
-                               result=getResult(iq.getTo(),iq.getFrom(),NAMESPACE_JABBER_IQ_AVATAR,iq.getID());
+                               result=getResult(iq.getFrom(),iq.getID());
                            }
                        }
                        else {
                            this.plugin.getCache().remove(iq.getFrom().toBareJID());
                            deleteVCardAvatar(iq.getFrom());
                            deletePEPAvatar(iq.getFrom());
-                           result=getResult(iq.getTo(),iq.getFrom(),NAMESPACE_JABBER_IQ_AVATAR,iq.getID());
+                           result=getResult(iq.getFrom(),iq.getID());
                        }
                    }
                    else {
-                       result = getError(iq.getFrom(),NAMESPACE_STORAGE_CLIENT_AVATAR,"modify","400","bad-request","urn:ietf:params:xml:ns:xmpp-stanzas");
+                       result = getError(iq.getFrom(),NAMESPACE_STORAGE_CLIENT_AVATAR,"modify","400","bad-request");
                    }
                }
                else {
-                   result = getError(iq.getFrom(),NAMESPACE_STORAGE_CLIENT_AVATAR,"modify","400","bad-request","urn:ietf:params:xml:ns:xmpp-stanzas");
+                   result = getError(iq.getFrom(),NAMESPACE_STORAGE_CLIENT_AVATAR,"modify","400","bad-request");
                }
            }
            else {
-              result = getError(iq.getFrom(),NAMESPACE_STORAGE_CLIENT_AVATAR,"cancel","503","service-unavailable","urn:ietf:params:xml:ns:xmpp-stanzas");
+              result = getError(iq.getFrom(),NAMESPACE_STORAGE_CLIENT_AVATAR,"cancel","503","service-unavailable");
            }
            return result;
         }
